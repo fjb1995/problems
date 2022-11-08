@@ -1,0 +1,154 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../core/constants/color.dart';
+import '../../core/constants/constants.dart';
+
+class GetLocation extends StatefulWidget {
+  const GetLocation({Key? key}) : super(key: key);
+
+  @override
+  State<GetLocation> createState() => _GetLocationState();
+}
+
+class _GetLocationState extends State<GetLocation> {
+
+  late Position myPosition;
+  late double lat;
+  late double lng;
+  late GoogleMapController googleMapController;
+  var _kGooglePlex;
+
+  @override
+  void initState() {
+    getLatAndLng();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 6,
+            child: Stack(
+              alignment: Alignment.bottomLeft,
+              children: [
+                _kGooglePlex == null ? const CircularProgressIndicator() : GoogleMap(
+                  mapType: MapType.normal,
+                  markers: myMarker,
+                  onTap: (latLng) {
+                    myMarker.remove(const Marker(markerId: MarkerId("1")));
+                    myMarker.add(Marker(
+                      draggable: true,
+                        onDragEnd: (latLng){
+                        lat = latLng.latitude;
+                        lng = latLng.longitude;
+                        },
+                        markerId: const MarkerId("1"),
+                        position: latLng),
+                    );
+                    lat = latLng.latitude;
+                    lng = latLng.longitude;
+                    setState(() {
+
+                    });
+                  },
+                  initialCameraPosition: _kGooglePlex,
+                  onMapCreated: (GoogleMapController controller) {
+                    googleMapController = controller;
+                  },
+                ),
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  child: FloatingActionButton.extended(
+                    onPressed: (){
+                      currentLocation();
+                      setState(() {
+                      });
+                    },
+                    label: const Text('My location'),
+                    icon: const Icon(Icons.my_location),
+                  ),
+                ),
+              ],
+            )
+          ),
+
+          Container(
+            margin: const EdgeInsets.all(20),
+            width: AppConstants.buttonWidth,
+            height: 55.0,
+            decoration: BoxDecoration(
+                color: AppColor.primaryButton,
+                borderRadius: BorderRadius.circular(45)
+            ),
+            child: MaterialButton(
+              onPressed: (){
+                print("++++++++++++++++++++++++++++");
+                print(lat.toString());
+                print(lng.toString());
+                print("++++++++++++++++++++++++++++");
+              },
+              child: Text("Set this location", style: Theme.of(context).textTheme.button),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  currentLocation() async {
+    myPosition = await Geolocator.getCurrentPosition().then((value) => value);
+    lat = myPosition.latitude;
+    lng = myPosition.longitude;
+    googleMapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(lat, lng),
+              zoom: 20,
+            )));
+    myMarker.remove(const Marker(markerId: MarkerId("1")));
+    myMarker.add(Marker(
+      draggable: true,
+      onDragEnd: (latLng){
+        lat = latLng.latitude;
+        lng = latLng.longitude;
+      },
+      markerId: const MarkerId("1"),
+      infoWindow: InfoWindow(
+        title: lat.toString(),
+      ),
+      position: LatLng(lat, lng),),);
+  }
+
+  Future<void> getLatAndLng() async {
+    myPosition = await Geolocator.getCurrentPosition().then((value) => value);
+    lat = myPosition.latitude;
+    lng = myPosition.longitude;
+    _kGooglePlex = CameraPosition(
+      target: LatLng(lat, lng),
+      zoom: 20,
+    );
+    myMarker.add(Marker(
+      draggable: true,
+      onDragEnd: (latLng){
+        lat = latLng.latitude;
+        lng = latLng.longitude;
+      },
+      markerId: const MarkerId("1"),
+      infoWindow: InfoWindow(
+        title: lat.toString(),
+      ),
+      position: LatLng(lat, lng),),);
+    setState(() {
+    });
+  }
+
+  Set<Marker> myMarker = {
+
+  };
+}

@@ -1,0 +1,42 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:kalashy/core/constants/constants.dart';
+import 'package:kalashy/view/widget/addnewaddress/addnewaddressfields.dart';
+import 'package:kalashy/view/widget/shared/backbutton.dart';
+import '../../controller/addaddress_controller.dart';
+import '../../core/constants/color.dart';
+import '../widget/addnewaddress/saveaddressbutton.dart';
+
+class AddNewAddress extends StatelessWidget {
+  const AddNewAddress({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Get.put(AddNewAddressControllerImp());
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: AppConstants.padding),
+          height: AppConstants.height,
+          width: AppConstants.width,
+          child: Column(
+            children: const [
+              CustomBackButton(),
+              Text("Add new address",
+                  style: TextStyle(
+                      color: AppColor.secondaryText,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold)
+              ),
+              SizedBox(height: 20,),
+              AddNewAddressFields(),
+              SizedBox(height: 20,),
+              SaveAddressButton(),
+              SizedBox(height: 50,),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

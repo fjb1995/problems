@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+abstract class AddNewAddressController extends GetxController{
+  late Position currentLocation;
+  late List<Placemark> locationInfo;
+  late bool services;
+  late LocationPermission permission;
+  late double lat;
+  late double lng;
+  late double cLat;
+  late double cLng;
+  late GoogleMapController googleMapController;
+  var kGooglePlex;
+
+  GlobalKey<FormState> formsState = GlobalKey<FormState>();
+  late TextEditingController cityController;
+  late TextEditingController locationController;
+  late TextEditingController nameController;
+  late TextEditingController phoneController;
+  late TextEditingController stateController;
+  late TextEditingController streetController;
+  late TextEditingController titleController;
+  late TextEditingController typeController;
+  saveAddress();
+  getPermission();
+  setAddress();
+  onMapTab(LatLng latLng);
+  myCurrentLocation();
+  getLatAndLng();
+}
+
+class AddNewAddressControllerImp extends AddNewAddressController{
+  @override
+  saveAddress() {
+
+  }
+
+  @override
+  void onInit() {
+    cityController = TextEditingController();
+    locationController = TextEditingController();
+    nameController = TextEditingController();
+    phoneController = TextEditingController();
+    stateController = TextEditingController();
+    titleController = TextEditingController();
+    typeController = TextEditingController();
+    streetController = TextEditingController();
+    getPermission();
+    getLatAndLng();
+    super.onInit();
+  }
+
+  @override
+  void dispose() {
+    cityController.dispose();
+    locationController.dispose();
+    nameController.dispose();
+    phoneController.dispose();
+    stateController.dispose();
+    titleController.dispose();
+    typeController.dispose();
+    streetController.dispose();
+    super.dispose();
+  }
+
+  @override
+  getPermission() async {
+    services = await Geolocator.isLocationServiceEnabled();
+    if(services == false){
+      Get.snackbar(
+          "location",
+          "Turn on location access",
+          duration: const Duration(seconds: 5)
+      );
+    }
+
+    permission = await Geolocator.checkPermission();
+    if(permission == LocationPermission.denied || permission == LocationPermission.deniedForever){
+      permission = await Geolocator.requestPermission();
+    }
+    if(permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+      currentLocation = await Geolocator.getCurrentPosition();
+      lat = currentLocation.latitude;
+      lng = currentLocation.longitude;
+
+    }
+  }
+
+
+  @override
+  Future<void> getLatAndLng() async {
+    currentLocation = await Geolocator.getCurrentPosition().then((value) => value);
+    lat = cLat = currentLocation.latitude;
+    lng = cLng = currentLocation.longitude;
+    kGooglePlex = CameraPosition(
+      target: LatLng(lat, lng),
+      zoom: 20,
+    );
+    myMarker.add(Marker(
+      draggable: true,
+      onDragEnd: (latLng){
+        lat = latLng.latitude;
+        lng = latLng.longitude;
+      },
+      markerId: const MarkerId("1"),
+      position: LatLng(lat, lng),),);
+    update();
+  }
+
+  @override
+  setAddress() async {
+    locationInfo = await placemarkFromCoordinates(lat, lng);
+    cityController.text = locationInfo[0].administrativeArea!;
+    stateController.text = locationInfo[0].subAdministrativeArea!;
+    streetController.text = "${locationInfo[0].subLocality!}, \n postal code: ${locationInfo[0].postalCode!}";
+    update();
+  }
+
+  @override
+  myCurrentLocation() {
+    lat = cLat;
+    lng =cLng;
+    googleMapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(lat, lng),
+              zoom: 20,
+            )));
+    myMarker.remove(const Marker(markerId: MarkerId("1")));
+    myMarker.add(Marker(
+      draggable: true,
+      onDragEnd: (latLng){
+        lat = latLng.latitude;
+        lng = latLng.longitude;
+      },
+      markerId: const MarkerId("1"),
+      infoWindow: InfoWindow(
+        title: lat.toString(),
+      ),
+      position: LatLng(lat, lng),),);
+    update();
+  }
+
+  Set<Marker> myMarker = {
+
+  };
+
+  @override
+  onMapTab(LatLng latLng){
+    myMarker.remove(const Marker(markerId: MarkerId("1")));
+    myMarker.add(Marker(
+        draggable: true,
+        onTap: (){
+          print("1");
+        },
+        onDragEnd: (latLng){
+          lat = latLng.latitude;
+          lng = latLng.longitude;
+          print("++++++++++++++++++++");
+          print("$lat , $lng");
+          print("++++++++++++++++++++");
+        },
+        markerId: const MarkerId("1"),
+        position: LatLng(lat, lng)),
+    );
+    lat = latLng.latitude;
+    lng = latLng.longitude;
+    update();
+  }
+
+}
